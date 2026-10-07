@@ -1,0 +1,14 @@
+{
+  "name": "捷運乘法",
+  "short_name": "捷運乘法",
+  "description": "乘法練習：連續答對乘法題，讓捷運從 A 站開到 C 站，在 B 站接到越多乘客分數越高",
+  "start_url": "/MRTmulti/index.html",
+  "scope": "/MRTmulti/",
+  "display": "standalone",
+  "background_color": "#5e35b1",
+  "theme_color": "#5e35b1",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
