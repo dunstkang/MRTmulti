@@ -1,4 +1,4 @@
-const VERSION      = '2026.10.07-v1.0';   // ← 每次發布只改這一行
+const VERSION      = '2026.10.07-v1.5';   // ← 每次發布只改這一行
 const CACHE_NAME   = `metro-${VERSION}`;
 const CORE_ASSETS  = [
   './',
@@ -6,6 +6,13 @@ const CORE_ASSETS  = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './st-zhongshan.webp',
+  './st-nanjing.webp',
+  './st-zhongxiao.webp',
+  './train.webp',
+  './track.webp',
+  './car1.webp',
+  './car2.webp',
 ];
 
 // 安裝：預先快取核心檔案，但不立刻 skipWaiting，

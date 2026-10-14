@@ -22,13 +22,20 @@ button.main{width:100%;padding:14px;margin-top:12px;font-size:1.1rem;font-weight
 .ctrl{display:flex;gap:10px;margin-top:12px}
 .ctrl button{flex:1;padding:12px;font-size:1rem;font-weight:700;border:0;border-radius:10px;color:#fff;cursor:pointer}
 .hud{display:flex;justify-content:space-between;font-weight:700;font-size:.95rem;margin-bottom:8px}
-.scene{position:relative;height:150px;border-radius:14px;overflow:hidden;background:linear-gradient(#90caf9,#e3f2fd);border:2px solid var(--bd);margin-bottom:12px}
-.rail{position:absolute;left:0;right:0;top:92px;height:5px;background:#d32f2f}
-.st{position:absolute;top:46px;transform:translateX(-50%);text-align:center;font-weight:900;font-size:1.1rem;color:#24324a}
-.st small{display:block;font-size:.9rem;min-height:1.2em;font-weight:400}
-.st .plat{width:46px;height:40px;border:3px solid #d32f2f;border-radius:8px;background:#ffffffaa;margin:2px auto 0}
-.train{position:absolute;top:60px;transform:translateX(-50%);transition:left .4s ease;font-size:1.8rem;text-align:center;line-height:1}
-.train span{display:block;white-space:nowrap;font-size:.7rem;font-weight:700;color:#24324a;background:#fff;border-radius:8px;padding:1px 6px}
+.scene{position:relative;aspect-ratio:1.6/1;border-radius:14px;overflow:hidden;background:linear-gradient(#90caf9,#e3f2fd);border:2px solid var(--bd);margin-bottom:12px}
+.track{position:absolute;left:0;right:0;bottom:0;height:36%;background:url(track.webp) repeat-x left bottom;background-size:auto 100%;z-index:1}
+.st{position:absolute;top:6px;width:26%;transform:translateX(-50%);text-align:center;font-weight:900;font-size:.75rem;line-height:1.3;color:#24324a;z-index:2}
+.st small{display:block;font-size:.8rem;min-height:1.2em;font-weight:400;line-height:1.2}
+.st img{display:block;width:100%;aspect-ratio:2/1;object-fit:cover;border-radius:6px;border:2px solid #fff;box-shadow:0 1px 4px #0003;margin-bottom:2px}
+.train{position:absolute;bottom:30%;width:26%;transform:translateX(-50%);transition:left .4s ease;text-align:center;line-height:1;z-index:4}
+.train img{display:block;width:100%}
+.train span{display:block;white-space:nowrap;font-size:1.05rem;font-weight:900;color:#24324a;text-shadow:0 0 4px #fff,0 0 4px #fff;margin-bottom:2px}
+/* 獎勵：雲與車 */
+.cloud{position:absolute;z-index:0;line-height:1;opacity:.92;pointer-events:none;animation:drift linear infinite}
+@keyframes drift{from{left:-14%}to{left:108%}}
+.car{position:absolute;bottom:.5%;z-index:3;width:9%;pointer-events:none;animation:drive linear infinite}
+.car img{display:block;width:100%}
+@keyframes drive{from{left:108%}to{left:-12%}}
 .q{display:flex;align-items:center;gap:12px;margin-bottom:10px}
 .target{font-size:2.6rem;white-space:nowrap;font-weight:900;color:var(--acc);line-height:1}
 .msg{font-size:.85rem;color:var(--dim)}
@@ -39,6 +46,12 @@ button.main{width:100%;padding:14px;margin-top:12px;font-size:1.1rem;font-weight
 .over{color:var(--bad)}
 .res{text-align:center;line-height:1.8}
 .res b{font-size:2rem;color:var(--acc)}
+.reward{margin-top:6px;padding:8px 10px;border-radius:10px;background:var(--bg);border:1px dashed var(--bd);font-size:.9rem}
+.reward.got{border-color:var(--ok);color:var(--ok);font-weight:700}
+.collect{text-align:center;font-weight:700;font-size:1rem;line-height:1.7}
+.collect small{display:block;font-weight:400;font-size:.75rem;color:var(--dim)}
+.tools{display:flex;gap:8px;margin-top:10px}
+.tools button{flex:1;padding:9px 4px;font-size:.8rem;font-weight:700;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--ink);cursor:pointer}
 #update-bar{display:none;position:fixed;left:0;right:0;z-index:9999;bottom:env(safe-area-inset-bottom,0px);background:#0a3a1a;border-top:2px solid #00e676;padding:12px 20px;align-items:center;justify-content:space-between;gap:12px;font-size:.9rem;color:#fff}
 #update-bar button{padding:8px 20px;background:#00e676;color:#0a2a14;border:none;border-radius:4px;font-weight:900;cursor:pointer}
 #version-tag{text-align:right;font-size:.65rem;color:var(--dim);opacity:.6;min-height:1em}
@@ -47,19 +60,30 @@ button.main{width:100%;padding:14px;margin-top:12px;font-size:1.1rem;font-weight
 <div id="version-tag"></div>
 <h1>🚇 捷運乘法</h1>
 
-<div id="menu" class="card">
-  <label>每站之間的時間（秒）</label><input id="limit" type="number" min="5" max="300" value="15">
-  <button class="main" onclick="start()">發車</button>
+<div id="menu">
+  <div class="card">
+    <label>每站之間的時間（秒）</label><input id="limit" type="number" min="5" max="300" value="15">
+    <button class="main" onclick="start()">發車</button>
+  </div>
+  <div class="card">
+    <div class="collect" id="collect-menu"></div>
+    <div class="tools">
+      <button onclick="exportJSON()">匯出紀錄 JSON</button>
+      <button onclick="$('importFile').click()">匯入紀錄</button>
+      <button onclick="clearRecords()">清除紀錄</button>
+    </div>
+    <input id="importFile" type="file" accept="application/json,.json" class="hidden" onchange="importJSON(this)">
+  </div>
 </div>
 
 <div id="game" class="hidden">
-  <div class="hud"><span id="seglab">A → B</span><span id="timer">0.0 秒</span><span id="prog">0 / 5</span></div>
-  <div class="scene">
-    <div class="st" style="left:10%">A<div class="plat"></div><small id="pA"></small></div>
-    <div class="st" style="left:50%">B<div class="plat"></div><small id="pB"></small></div>
-    <div class="st" style="left:90%">C<div class="plat"></div><small></small></div>
-    <div class="rail"></div>
-    <div class="train" id="train" style="left:10%">🚇<span id="onboard"></span></div>
+  <div class="hud"><span id="seglab">中山國中 → 南京復興</span><span id="timer">0.0 秒</span><span id="prog">0 / 5</span></div>
+  <div class="scene" id="scene">
+    <div class="st" style="left:15%"><img src="st-zhongshan.webp" alt="中山國中站">中山國中站<small id="p0"></small></div>
+    <div class="st" style="left:50%"><img src="st-nanjing.webp" alt="南京復興站">南京復興站<small id="p1"></small></div>
+    <div class="st" style="left:85%"><img src="st-zhongxiao.webp" alt="忠孝復興站">忠孝復興站<small id="p2"></small></div>
+    <div class="track"></div>
+    <div class="train" id="train" style="left:15%"><span id="onboard"></span><img src="train.webp" alt="捷運車廂"></div>
   </div>
   <div class="q"><div class="target" id="target">0</div><div class="msg" id="msg"></div></div>
   <div class="grid" id="grid"></div>
@@ -77,11 +101,106 @@ let S,timerId;
 const $=id=>document.getElementById(id);
 const people=n=>n>0?'🧍'.repeat(n):'';
 
+/* ===== 遊戲紀錄（JSON）=====
+   格式：{ "version":1, "records":[ {t, a, b, onboard, score, perfect}, ... ] }
+   - 自動存在瀏覽器 localStorage（JSON 字串）
+   - 可用「匯出紀錄 JSON」下載成檔案、「匯入紀錄」合併回來
+   雲、車的數量由 records 即時計算，不另存，匯入後自然一致。 */
+const KEY='mrtmulti-records-v1';
+let DB=loadDB();
+function loadDB(){
+  try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&Array.isArray(d.records))return d;}catch(e){}
+  return {version:1,records:[]};
+}
+function saveDB(){try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}}
+
+/* 獎勵規則（只算「100 分」＝準時且載滿 10 人的回合）
+   a ∈ [15,20)  → 每次 +1 朵雲
+   a ∈ [20,25)  → 每次 +1 輛車
+   a ∈ [25,30]  → 每累計 3 次 +1 輛車 */
+function tally(){
+  let clouds=0,carsA=0,slow=0;
+  for(const r of DB.records){
+    if(!r.perfect)continue;
+    if(r.a>=15&&r.a<20)clouds++;
+    else if(r.a>=20&&r.a<25)carsA++;
+    else if(r.a>=25&&r.a<=30)slow++;
+  }
+  return {clouds,cars:carsA+Math.floor(slow/3),slow,slowMod:slow%3};
+}
+
+function collectText(){
+  const t=tally();
+  return `☁️ × ${t.clouds}　🚗 × ${t.cars}　📒 已記錄 ${DB.records.length} 局
+    <small>25~30 秒滿分進度：${t.slowMod} / 3（集滿 3 次多一輛車）</small>`;
+}
+
+const CAR_IMGS=['car1.webp','car2.webp'];   // 之後有新車圖，加進這個陣列即可
+function renderCollection(){
+  const t=tally();
+  $('collect-menu').innerHTML=collectText();
+  const sc=$('scene');
+  sc.querySelectorAll('.cloud,.car').forEach(e=>e.remove());
+  const nc=Math.min(t.clouds,14), nv=Math.min(t.cars,10);
+  for(let i=0;i<nc;i++){
+    const e=document.createElement('div');e.className='cloud';e.textContent='☁️';
+    e.style.top=(2+((i*37)%42))+'%';
+    e.style.fontSize=(1.3+((i*13)%10)/10)+'rem';
+    const dur=40+((i*17)%30);
+    e.style.animationDuration=dur+'s';
+    e.style.animationDelay=(-dur*((i*0.173)%1))+'s';
+    sc.appendChild(e);
+  }
+  for(let i=0;i<nv;i++){
+    const e=document.createElement('div');e.className='car';
+    e.innerHTML='<img src="'+CAR_IMGS[i%CAR_IMGS.length]+'" alt="車">';
+    e.style.width=(8+((i*7)%4))+'%';
+    const dur=9+((i*5)%8);
+    e.style.bottom=(0.5+(i%2)*2.2)+'%';
+    e.style.animationDuration=dur+'s';
+    e.style.animationDelay=(-dur*((i*0.211)%1))+'s';
+    sc.appendChild(e);
+  }
+}
+
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='mrtmulti-records.json';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function importJSON(inp){
+  const f=inp.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const d=JSON.parse(rd.result);
+      if(!d||!Array.isArray(d.records))throw 0;
+      const have=new Set(DB.records.map(r=>r.t));
+      let add=0;
+      d.records.forEach(r=>{
+        if(r&&typeof r.t==='string'&&typeof r.a==='number'&&!have.has(r.t)){DB.records.push(r);have.add(r.t);add++;}
+      });
+      DB.records.sort((x,y)=>x.t<y.t?-1:1);
+      saveDB();renderCollection();
+      alert(`匯入完成，新增 ${add} 筆紀錄`);
+    }catch(e){alert('檔案格式不正確');}
+    inp.value='';
+  };
+  rd.readAsText(f);
+}
+function clearRecords(){
+  if(!confirm('確定要清除所有紀錄（雲與車也會一併歸零）？建議先匯出備份。'))return;
+  DB={version:1,records:[]};saveDB();renderCollection();
+}
+
 function start(){
     const a=Math.max(5,parseInt($('limit').value)||30);
   S={a,seg:0,step:0,onboard:5,waiting:5,t0:performance.now(),segStart:performance.now(),target:0,answer:0,done:false};
   $('menu').classList.add('hidden');$('result').classList.add('hidden');$('game').classList.remove('hidden');
-  $('pA').textContent='';render();newRound();
+  $('p0').textContent='';renderCollection();render();newRound();
   clearInterval(timerId);timerId=setInterval(tick,100);
 }
 
@@ -89,12 +208,13 @@ function resetToMenu(){
   clearInterval(timerId);
   if(S)S.done=true;
   $('game').classList.add('hidden');$('result').classList.add('hidden');$('menu').classList.remove('hidden');
+  renderCollection();
 }
 
 function tick(){
   if(S.done)return;
   const segT=(performance.now()-S.segStart)/1000;
-  if(S.seg===0) S.waiting=5-Math.min(5,Math.floor(segT/S.a));   // 每滿一個 a 秒，B 站走一人
+  if(S.seg===0) S.waiting=5-Math.min(5,Math.floor(segT/S.a));   // 每滿一個 a 秒，南京復興站走一人
   const left=S.a-segT;
   $('timer').textContent=left>=0?`剩 ${left.toFixed(1)} 秒`:`超時 ${(-left).toFixed(1)} 秒`;
   $('timer').classList.toggle('over',left<0);
@@ -102,12 +222,12 @@ function tick(){
 }
 
 function render(){
-  $('pB').textContent=S.seg===0?people(S.waiting):'';
-  $('onboard').textContent=people(S.onboard)+' '+S.onboard+' 人';
-  $('seglab').textContent=S.seg===0?'A → B':'B → C';
+  $('p1').textContent=S.seg===0?people(S.waiting):'';
+  $('onboard').textContent=S.onboard+'人';
+  $('seglab').textContent=S.seg===0?'中山國中 → 南京復興':'南京復興 → 忠孝復興';
   $('prog').textContent=S.step+' / 5';
   const p=(S.seg*5+S.step)/10;
-  $('train').style.left=(10+p*80)+'%';
+  $('train').style.left=(15+p*70)+'%';
 }
 
 const rnd=n=>Math.floor(Math.random()*n);
@@ -139,7 +259,7 @@ function pick(btn,n){
   // 到站
   if(S.seg===0){
     S.onboard+=S.waiting;S.waiting=0;S.seg=1;S.step=0;S.segStart=performance.now();
-    render();$('msg').textContent='到 B 站了！';newRound();
+    render();$('msg').textContent='到南京復興站了！';newRound();
   }else{
     finish();
   }
@@ -150,16 +270,35 @@ function finish(){
   const b=(performance.now()-S.t0)/1000;
   const par=2*S.a, onTime=b<=par;
   const score=onTime?10*S.onboard:S.onboard*(par/b)*10;
+  const perfect=onTime&&S.onboard===10;          // 100 分
+
+  // 記錄這一局，並比較獎勵前後
+  const before=tally();
+  DB.records.push({t:new Date().toISOString(),a:S.a,b:+b.toFixed(2),onboard:S.onboard,score:+score.toFixed(1),perfect});
+  saveDB();
+  const after=tally();
+
+  let rwd,got=false;
+  if(after.clouds>before.clouds){rwd='☁️ 畫面多了一朵雲！';got=true;}
+  else if(after.cars>before.cars){rwd='🚗 畫面多了一輛車！';got=true;}
+  else if(!perfect){rwd='要拿到 100 分（準時且載滿 10 人）才有獎勵喔';}
+  else if(S.a>=25&&S.a<=30){rwd=`25~30 秒滿分進度 ${after.slowMod} / 3，再 ${3-after.slowMod} 次就多一輛車`;}
+  else{rwd='設定時間在 15~30 秒的滿分局才有獎勵';}
+
   $('game').classList.add('hidden');
   const r=$('result');r.classList.remove('hidden');
-  r.innerHTML=`<div>🎉 抵達 C 站！</div>
+  r.innerHTML=`<div>🎉 抵達忠孝復興站！</div>
     <div>車上旅客 n = ${S.onboard} 人</div>
     <div>設定時間 a = ${S.a} 秒（兩段共 ${par} 秒），總花費 b = ${b.toFixed(1)} 秒</div>
     <div>${onTime?`準時抵達：得分 = 10 × ${S.onboard}`:`超時：得分 = ${S.onboard} × (${par}/${b.toFixed(1)}) × 10`}</div>
     <b>${score.toFixed(1)} 分</b>
+    <div class="reward${got?' got':''}">${rwd}</div>
+    <div class="collect" style="margin-top:8px">${collectText()}</div>
     <button class="main" onclick="start()">再玩一次</button>
     <button class="main" style="background:var(--dim)" onclick="resetToMenu()">重新設定</button>`;
 }
+
+renderCollection();
 
 /* ===== PWA 安裝 / 更新（使用者確認後才切換版本） ===== */
 if('serviceWorker' in navigator){
