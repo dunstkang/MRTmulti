@@ -19,6 +19,7 @@ label{display:block;font-size:.8rem;color:var(--dim);margin:8px 0 4px}
 input{width:100%;padding:10px;font-size:1.2rem;text-align:center;border:2px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--ink)}
 button.main{width:100%;padding:14px;margin-top:12px;font-size:1.1rem;font-weight:700;border:0;border-radius:10px;background:var(--acc);color:#fff;cursor:pointer}
 .hidden{display:none}
+.rules{font-size:.85rem;line-height:1.8;color:var(--dim);text-align:center}
 .ctrl{display:flex;gap:10px;margin-top:12px}
 .ctrl button{flex:1;padding:12px;font-size:1rem;font-weight:700;border:0;border-radius:10px;color:#fff;cursor:pointer}
 .hud{display:flex;justify-content:space-between;font-weight:700;font-size:.95rem;margin-bottom:8px}
@@ -43,7 +44,6 @@ button.main{width:100%;padding:14px;margin-top:12px;font-size:1.1rem;font-weight
 .nb{aspect-ratio:2/1;border-radius:12px;border:3px solid transparent;font-size:2rem;font-weight:900;color:#fff;cursor:pointer}
 .nb.bad{border-color:var(--bad);animation:sh .3s}
 @keyframes sh{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-.over{color:var(--bad)}
 .res{text-align:center;line-height:1.8}
 .res b{font-size:2rem;color:var(--acc)}
 .reward{margin-top:6px;padding:8px 10px;border-radius:10px;background:var(--bg);border:1px dashed var(--bd);font-size:.9rem}
@@ -62,7 +62,8 @@ button.main{width:100%;padding:14px;margin-top:12px;font-size:1.1rem;font-weight
 
 <div id="menu">
   <div class="card">
-    <label>每站之間的時間（秒）</label><input id="limit" type="number" min="5" max="300" value="15">
+    <div class="rules">連續答對 10 題，從中山國中開到忠孝復興。<br>完成時間越短，獎勵越好：<br>
+      ≤15 秒　☁️＋🚗<br>15~20 秒　☁️<br>20~25 秒　🚗<br>25~35 秒　+1 點（集滿 5 點多一輛🚗）</div>
     <button class="main" onclick="start()">發車</button>
   </div>
   <div class="card">
@@ -89,7 +90,7 @@ button.main{width:100%;padding:14px;margin-top:12px;font-size:1.1rem;font-weight
   <div class="grid" id="grid"></div>
   <div class="ctrl">
     <button style="background:var(--acc)" onclick="start()">重來</button>
-    <button style="background:var(--dim)" onclick="resetToMenu()">重新設定</button>
+    <button style="background:var(--dim)" onclick="resetToMenu()">回主選單</button>
   </div>
 </div>
 
@@ -102,7 +103,7 @@ const $=id=>document.getElementById(id);
 const people=n=>n>0?'🧍'.repeat(n):'';
 
 /* ===== 遊戲紀錄（JSON）=====
-   格式：{ "version":1, "records":[ {t, a, b, onboard, score, perfect}, ... ] }
+   格式：{ "version":1, "records":[ {t, b, onboard, score}（舊紀錄可能多帶 a、perfect，會被忽略）, ... ] }
    - 自動存在瀏覽器 localStorage（JSON 字串）
    - 可用「匯出紀錄 JSON」下載成檔案、「匯入紀錄」合併回來
    雲、車的數量由 records 即時計算，不另存，匯入後自然一致。 */
@@ -114,25 +115,29 @@ function loadDB(){
 }
 function saveDB(){try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}}
 
-/* 獎勵規則（只算「100 分」＝準時且載滿 10 人的回合）
-   a ∈ [15,20)  → 每次 +1 朵雲
-   a ∈ [20,25)  → 每次 +1 輛車
-   a ∈ [25,30]  → 每累計 3 次 +1 輛車 */
+/* 獎勵規則（依完成時間 t＝發車到抵達忠孝復興站的總秒數，紀錄中的 b）
+   t ≤ 15        → ☁️ +1、🚗 +1
+   15 < t ≤ 20   → ☁️ +1
+   20 < t ≤ 25   → 🚗 +1
+   25 < t ≤ 35   → 點數 +1；累積 5 點 → 🚗 +1
+   只要這一局拿到車（不論原因），點數歸零。 */
+const PTS_FULL=5;
 function tally(){
-  let clouds=0,carsA=0,slow=0;
+  let clouds=0,cars=0,pts=0;
   for(const r of DB.records){
-    if(!r.perfect)continue;
-    if(r.a>=15&&r.a<20)clouds++;
-    else if(r.a>=20&&r.a<25)carsA++;
-    else if(r.a>=25&&r.a<=30)slow++;
+    const t=r.b; if(typeof t!=='number')continue;
+    if(t<=15){clouds++;cars++;pts=0;}
+    else if(t<=20){clouds++;}
+    else if(t<=25){cars++;pts=0;}
+    else if(t<=35){pts++;if(pts>=PTS_FULL){cars++;pts=0;}}
   }
-  return {clouds,cars:carsA+Math.floor(slow/3),slow,slowMod:slow%3};
+  return {clouds,cars,pts};
 }
 
 function collectText(){
   const t=tally();
   return `☁️ × ${t.clouds}　🚗 × ${t.cars}　📒 已記錄 ${DB.records.length} 局
-    <small>25~30 秒滿分進度：${t.slowMod} / 3（集滿 3 次多一輛車）</small>`;
+    <small>25~35 秒累積點數：${t.pts} / ${PTS_FULL}（集滿多一輛車）</small>`;
 }
 
 const CAR_IMGS=['car1.webp','car2.webp'];   // 之後有新車圖，加進這個陣列即可
@@ -196,9 +201,9 @@ function clearRecords(){
   DB={version:1,records:[]};saveDB();renderCollection();
 }
 
+const PAX_SEC=5;   // 南京復興站候車乘客：每過幾秒走一人
 function start(){
-    const a=Math.max(5,parseInt($('limit').value)||30);
-  S={a,seg:0,step:0,onboard:5,waiting:5,t0:performance.now(),segStart:performance.now(),target:0,answer:0,done:false};
+  S={seg:0,step:0,onboard:5,waiting:5,t0:performance.now(),segStart:performance.now(),target:0,answer:0,done:false};
   $('menu').classList.add('hidden');$('result').classList.add('hidden');$('game').classList.remove('hidden');
   $('p0').textContent='';renderCollection();render();newRound();
   clearInterval(timerId);timerId=setInterval(tick,100);
@@ -213,11 +218,10 @@ function resetToMenu(){
 
 function tick(){
   if(S.done)return;
-  const segT=(performance.now()-S.segStart)/1000;
-  if(S.seg===0) S.waiting=5-Math.min(5,Math.floor(segT/S.a));   // 每滿一個 a 秒，南京復興站走一人
-  const left=S.a-segT;
-  $('timer').textContent=left>=0?`剩 ${left.toFixed(1)} 秒`:`超時 ${(-left).toFixed(1)} 秒`;
-  $('timer').classList.toggle('over',left<0);
+  const now=performance.now();
+  const segT=(now-S.segStart)/1000;
+  if(S.seg===0) S.waiting=5-Math.min(5,Math.floor(segT/PAX_SEC));   // 每滿 PAX_SEC 秒，南京復興站走一人
+  $('timer').textContent=`${((now-S.t0)/1000).toFixed(1)} 秒`;
   render();
 }
 
@@ -267,35 +271,33 @@ function pick(btn,n){
 
 function finish(){
   S.done=true;clearInterval(timerId);render();
-  const b=(performance.now()-S.t0)/1000;
-  const par=2*S.a, onTime=b<=par;
-  const score=onTime?10*S.onboard:S.onboard*(par/b)*10;
-  const perfect=onTime&&S.onboard===10;          // 100 分
+  const b=+((performance.now()-S.t0)/1000).toFixed(2);   // 完成時間 t
+  const score=10*S.onboard;
 
-  // 記錄這一局，並比較獎勵前後
   const before=tally();
-  DB.records.push({t:new Date().toISOString(),a:S.a,b:+b.toFixed(2),onboard:S.onboard,score:+score.toFixed(1),perfect});
+  DB.records.push({t:new Date().toISOString(),b,onboard:S.onboard,score});
   saveDB();
   const after=tally();
 
-  let rwd,got=false;
-  if(after.clouds>before.clouds){rwd='☁️ 畫面多了一朵雲！';got=true;}
-  else if(after.cars>before.cars){rwd='🚗 畫面多了一輛車！';got=true;}
-  else if(!perfect){rwd='要拿到 100 分（準時且載滿 10 人）才有獎勵喔';}
-  else if(S.a>=25&&S.a<=30){rwd=`25~30 秒滿分進度 ${after.slowMod} / 3，再 ${3-after.slowMod} 次就多一輛車`;}
-  else{rwd='設定時間在 15~30 秒的滿分局才有獎勵';}
+  const dc=after.clouds>before.clouds, dv=after.cars>before.cars;
+  let rwd,got=dc||dv;
+  if(dc&&dv)rwd='☁️🚗 畫面多了一朵雲和一輛車！';
+  else if(dc)rwd='☁️ 畫面多了一朵雲！';
+  else if(dv&&b>25)rwd=`🚗 集滿 ${PTS_FULL} 點，畫面多了一輛車！`;
+  else if(dv)rwd='🚗 畫面多了一輛車！';
+  else if(b<=35)rwd=`+1 點，累積 ${after.pts} / ${PTS_FULL}，再 ${PTS_FULL-after.pts} 點就多一輛車`;
+  else rwd='35 秒內完成才有獎勵喔';
 
   $('game').classList.add('hidden');
   const r=$('result');r.classList.remove('hidden');
   r.innerHTML=`<div>🎉 抵達忠孝復興站！</div>
+    <div>完成時間 t = ${b.toFixed(1)} 秒</div>
     <div>車上旅客 n = ${S.onboard} 人</div>
-    <div>設定時間 a = ${S.a} 秒（兩段共 ${par} 秒），總花費 b = ${b.toFixed(1)} 秒</div>
-    <div>${onTime?`準時抵達：得分 = 10 × ${S.onboard}`:`超時：得分 = ${S.onboard} × (${par}/${b.toFixed(1)}) × 10`}</div>
-    <b>${score.toFixed(1)} 分</b>
+    <b>${score} 分</b>
     <div class="reward${got?' got':''}">${rwd}</div>
     <div class="collect" style="margin-top:8px">${collectText()}</div>
     <button class="main" onclick="start()">再玩一次</button>
-    <button class="main" style="background:var(--dim)" onclick="resetToMenu()">重新設定</button>`;
+    <button class="main" style="background:var(--dim)" onclick="resetToMenu()">回主選單</button>`;
 }
 
 renderCollection();

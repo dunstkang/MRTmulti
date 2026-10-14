@@ -1,4 +1,4 @@
-const VERSION      = '2026.10.07-v1.5';   // ← 每次發布只改這一行
+const VERSION      = '2026.10.14-v1.6';   // ← 每次發布只改這一行
 const CACHE_NAME   = `metro-${VERSION}`;
 const CORE_ASSETS  = [
   './',
